@@ -17,6 +17,7 @@ This module creates underlying VPC network components:
 2. [Public Gateways](##public-gateways)
 3. [Network ACL](##network-acl)
 4. [Subnets](##subnets)
+5. [VPN Gateways](##VPN-Gateways)
 5. [Module Variables](##Module-Variables)
 6. [Module Outputs](##Module-Outputs)
 7. [As A Module in a Larger Architecture](##As-A-Module-in-a-Larger-Architecture)
@@ -90,6 +91,8 @@ module.subnets.ibm_is_vpc_address_prefix.subnet_prefix["gcat-multizone-subnet-c"
 ## VPN Gateways
 
 This module can create any number of VPN gateways on any number of subnets using the `vpn_gateways` variable. For more about VPN gateways on VPC [read the documentation here](https://cloud.ibm.com/docs/vpc?topic=vpc-using-vpn)
+
+---
 
 ## Module Variables
 
