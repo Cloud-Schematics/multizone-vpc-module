@@ -7,6 +7,11 @@ output "vpc_id" {
   value       = ibm_is_vpc.vpc.id
 }
 
+output "vpc_crn" {
+  description = "CRN of VPC created"
+  value       = ibm_is_vpc.vpc.crn
+}
+
 ##############################################################################
 
 
