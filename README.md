@@ -1,4 +1,4 @@
-# IBM VPC Terraform module
+# IBM VPC Terraform Module (Version 2)
 
 This module creates underlying VPC network components:
 
