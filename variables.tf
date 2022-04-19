@@ -30,6 +30,12 @@ variable "tags" {
 # Optional VPC Variables
 ##############################################################################
 
+variable "network_cidr" {
+  description = "Network CIDR for the VPC. This is used to manage network ACL rules for cluster provisioning."
+  type        = string
+  default     = "10.0.0.0/8"
+}
+
 variable "vpc_name" {
   description = "Name for vpc. If left null, one will be generated using the prefix for this module."
   type        = string
@@ -304,6 +310,85 @@ variable "subnets" {
 
 
 ##############################################################################
+# Default Security Group Rules
+##############################################################################
+
+variable "security_group_rules" {
+  description = "A list of security group rules to be added to the default vpc security group"
+  type = list(
+    object({
+      name      = string
+      direction = string
+      remote    = string
+      tcp = optional(
+        object({
+          port_max = optional(number)
+          port_min = optional(number)
+        })
+      )
+      udp = optional(
+        object({
+          port_max = optional(number)
+          port_min = optional(number)
+        })
+      )
+      icmp = optional(
+        object({
+          type = optional(number)
+          code = optional(number)
+        })
+      )
+    })
+  )
+
+  validation {
+    error_message = "Security group rules can only have one of `icmp`, `udp`, or `tcp`."
+    condition = (var.security_group_rules == null || length(var.security_group_rules) == 0) ? true : length(distinct(
+      # Get flat list of results
+      flatten([
+        # Check through rules
+        for rule in var.security_group_rules :
+        # Return true if there is more than one of `icmp`, `udp`, or `tcp`
+        true if length(
+          [
+            for type in ["tcp", "udp", "icmp"] :
+            true if rule[type] != null
+          ]
+        ) > 1
+      ])
+    )) == 0 # Checks for length. If all fields all correct, array will be empty
+  }
+
+  validation {
+    error_message = "Security group rule direction can only be `inbound` or `outbound`."
+    condition = (var.security_group_rules == null || length(var.security_group_rules) == 0) ? true : length(distinct(
+      flatten([
+        # Check through rules
+        for rule in var.security_group_rules :
+        # Return false if direction is not valid
+        false if !contains(["inbound", "outbound"], rule.direction)
+      ])
+    )) == 0
+  }
+
+  validation {
+    error_message = "Security group rule names must match the regex pattern ^([a-z]|[a-z][-a-z0-9]*[a-z0-9])$."
+    condition = (var.security_group_rules == null || length(var.security_group_rules) == 0) ? true : length(distinct(
+      flatten([
+        # Check through rules
+        for rule in var.security_group_rules :
+        # Return false if direction is not valid
+        false if !can(regex("^([a-z]|[a-z][-a-z0-9]*[a-z0-9])$", rule.name))
+      ])
+    )) == 0
+  }
+}
+
+
+##############################################################################
+
+
+##############################################################################
 # Add routes to VPC
 ##############################################################################
 
@@ -315,35 +400,6 @@ variable "routes" {
       zone        = number
       destination = string
       next_hop    = string
-    })
-  )
-  default = []
-}
-
-##############################################################################
-
-
-##############################################################################
-# VPN Gateways
-##############################################################################
-
-variable "vpn_gateways" {
-  description = "List defining the information needed to create a VPN service to securely connect your VPC to another private network"
-  type = list(
-    object({
-      name        = string
-      subnet_name = string # Do not include prefix, use same name as in `var.subnets`
-      mode        = optional(string)
-      tags        = optional(list(string))
-      connections = list(
-        object({
-          peer_address   = list(string)
-          preshared_key  = string
-          local_cidrs    = optional(list(string))
-          peer_cidrs     = optional(list(string))
-          admin_state_up = optional(bool)
-        })
-      )
     })
   )
   default = []
